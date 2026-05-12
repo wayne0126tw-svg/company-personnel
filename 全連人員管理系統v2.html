@@ -1160,25 +1160,32 @@ function loadDb() {
   return new Promise((resolve) => {
     dbRef.once('value', (snapshot) => {
       const fbData = snapshot.val();
-      if (fbData) {
+      if (fbData && fbData.platoons && fbData.platoons.length > 0) {
         db = fbData;
         console.log('✔ 從 Firebase 載入資料');
       } else {
-        // Firebase 無資料，嘗試載入本機備份
-        try { const d = localStorage.getItem(STORE_KEY); if (d) db = JSON.parse(d); } catch(e){}
-        if (Object.keys(db.platoons).length === 0) {
-          // 都沒有資料，使用預設值
-          db = defaultData();
-          console.log('ℹ 使用預設資料');
-        }
+        // Firebase 無資料或資料為空，使用預設值
+        db = defaultData();
+        console.log('ℹ 載入預設資料並同步到 Firebase');
         // 存到 Firebase
-        saveDb();
+        dbRef.set(db).catch(err => console.warn('首次同步失敗:', err));
       }
       resolve();
     }).catch(err => {
-      console.warn('Firebase 載入失敗，使用本機資料:', err.message);
-      // 無法連線 Firebase，使用本機資料
-      try { const d = localStorage.getItem(STORE_KEY); if (d) db = JSON.parse(d); } catch(e){}
+      console.warn('Firebase 載入失敗，使用本機或預設資料:', err.message);
+      // 無法連線 Firebase，嘗試使用本機資料
+      try { 
+        const d = localStorage.getItem(STORE_KEY); 
+        if (d) { 
+          db = JSON.parse(d);
+          console.log('✔ 從本機載入資料');
+        } else {
+          db = defaultData();
+          console.log('ℹ 使用預設資料（離線模式）');
+        }
+      } catch(e){
+        db = defaultData();
+      }
       resolve();
     });
   });
@@ -1690,23 +1697,28 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════
 let firebaseLoaded = false;
 
+// 初始化資料
+db = defaultData();
+
 // 載入資料並初始化即時監聽
 loadDb().then(() => {
   firebaseLoaded = true;
   render();
   
+  // 強制寫入 Firebase（確保資料存在）
+  if (!db.platoons || db.platoons.length === 0) {
+    db = defaultData();
+    saveDb();
+    console.log('✔ 已初始化預設資料到 Firebase');
+  }
+  
   // 監聽 Firebase 變化（其他人修改時自動更新）
   dbRef.on('value', (snapshot) => {
     const fbData = snapshot.val();
-    if (fbData && firebaseLoaded) {
-      const oldCount = db.platoons.length;
+    if (fbData && fbData.platoons && fbData.platoons.length > 0) {
       db = fbData;
       render();
-      
-      // 如果是他人修改（有明顯變化），顯示提示
-      if (db.platoons.length !== oldCount) {
-        toast('🔄 資料已同步');
-      }
+      console.log('🔄 Firebase 資料已更新');
     }
   }, (err) => {
     console.warn('Firebase 監聽失敗:', err.message);
