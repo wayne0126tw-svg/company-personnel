@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#181d10">
+<title>全連人員管理系統 - 實時同步版</title>
+<style>
+:root {
+  --bg: #181d10;
+  --bg2: #1f2615;
+  --olive: #3a4728;
+  --khaki: #a8bf72;
+  --amber: #f0b535;
+  --paper: #e5e0cc;
+  --red: #f07060;
+  --green: #5dde8e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--paper);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--olive);
+}
+
+h1 {
+  font-size: 28px;
+  color: var(--amber);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--olive);
+  border-radius: 4px;
+  font-size: 12px;
+  min-width: 120px;
+}
+
+.status.connected {
+  background: var(--green);
+  color: var(--bg);
+}
+
+.status.syncing {
+  background: #f0b535;
+  color: var(--bg);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.content {
+  background: var(--bg2);
+  padding: 20px;
+  border: 1px solid var(--olive);
+  border-radius: 4px;
+  min-height: 400px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: var(--olive);
+  padding: 15px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 28px;
+  color: var(--amber);
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--khaki);
+  margin-top: 5px;
+}
+
+.controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 10px 16px;
+  background: var(--olive);
+  color: var(--paper);
+  border: 1px solid var(--khaki);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+button:hover {
+  background: var(--khaki);
+  color: var(--bg);
+}
+
+button.primary {
+  background: var(--amber);
+  color: var(--bg);
+  border: none;
+  font-weight: bold;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.platoons {
+  display: grid;
+  gap: 15px;
+}
+
+.platoon {
+  background: var(--bg);
+  border: 1px solid var(--olive);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.platoon-header {
+  background: var(--olive);
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.platoon-header:hover {
+  background: var(--khaki);
+  color: var(--bg);
+}
+
+.platoon-body {
+  padding: 12px;
+  display: none;
+}
+
+.platoon-body.expanded {
+  display: block;
+}
+
+.squad {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: var(--bg2);
+  border-left: 3px solid var(--khaki);
+  border-radius: 2px;
+}
+
+.squad-title {
+  font-weight: bold;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+
+.members {
+  margin-left: 10px;
+}
+
+.member {
+  padding: 8px;
+  background: rgba(0,0,0,0.2);
+  margin-bottom: 6px;
+  border-radius: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  color: var(--paper);
+  font-weight: 500;
+}
+
+.member-rank {
+  font-size: 11px;
+  color: #a8a89a;
+}
+
+.squad-actions, .member-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.squad-actions button, .member-actions button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--paper);
+  border: 1px solid var(--olive);
+  border-radius: 4px;
+  font-family: inherit;
+  margin-bottom: 10px;
+}
+
+.dialog {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog.active {
+  display: flex;
+}
+
+.dialog-content {
+  background: var(--bg2);
+  border: 2px solid var(--olive);
+  border-radius: 4px;
+  padding: 20px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-title {
+  font-size: 18px;
+  color: var(--amber);
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.form-row {
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  display: block;
+  font-size: 12px;
+  color: var(--khaki);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.dialog-actions button {
+  flex: 1;
+}
+
+.muted {
+  color: #606858;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--khaki);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>⚔ 全連人員管理系統</h1>
+    <div class="status" id="status">
+      <div class="status-dot"></div>
+      <span id="status-text">連線中...</span>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-number" id="total-count">0</div>
+        <div class="stat-label">總人數</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" onclick="openDialog('addPlatoonDialog')">➕ 新增排</button>
+      <button onclick="syncNow()" id="syncBtn">🔄 同步</button>
+      <button onclick="exportData()">📤 備份</button>
+    </div>
+
+    <div class="platoons" id="platoons">
+      <div class="loading">初始化中... 請稍候</div>
+    </div>
+  </div>
+</div>
+
+<!-- Dialogs -->
+<div class="dialog" id="addPlatoonDialog">
+  <div class="dialog-content">
+    <div class="modal-title">新增排</div>
+    <div class="form-row">
+      <label>排名稱</label>
+      <input type="text" id="platoonNameInput" placeholder="例：一排">
+    </div>
+    <div class="dialog-actions">
+      <button onclick="closeDialog('addPlatoonDialog')">取消</button>
+      <button class="primary" onclick="addPlatoon()">✔ 新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog" id="addSquadDialog">
+  <div class="dialog-content">
+    <div class="modal-title">新增班</div>
+    <div class="form-row">
+      <label>班名稱</label>
+      <input type="text" id="squadNameInput" placeholder="例：一班">
+    </div>
+    <div class="dialog-actions">
+      <button onclick="closeDialog('addSquadDialog')">取消</button>
+      <button class="primary" onclick="addSquad()">✔ 新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="dialog" id="addMemberDialog">
+  <div class="dialog-content">
+    <div class="modal-title">新增人員</div>
+    <div class="form-row">
+      <label>姓名</label>
+      <input type="text" id="memberNameInput" placeholder="例：王小明">
+    </div>
+    <div class="form-row">
+      <label>軍階</label>
+      <input type="text" id="memberRankInput" placeholder="例：上士">
+    </div>
+    <div class="form-row">
+      <label>軍號</label>
+      <input type="text" id="memberIdInput" placeholder="例：123456">
+    </div>
+    <div class="dialog-actions">
+      <button onclick="closeDialog('addMemberDialog')">取消</button>
+      <button class="primary" onclick="addMember()">✔ 新增</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://company-personnel-complete-2-zip--wayne0126tw.replit.app';
+let db = { platoons: [] };
+let isConnected = false;
+let currentPlatoonId = null;
+let currentSquadId = null;
+let syncInterval = null;
+
+// 初始化
+async function init() {
+  console.log('🔄 初始化系統...');
+  await loadData();
+  render();
+  
+  // 每 3 秒自動同步
+  syncInterval = setInterval(autoSync, 3000);
+}
+
+// 載入資料
+async function loadData() {
+  try {
+    const response = await fetch(API_URL + '/api/data');
+    if (response.ok) {
+      db = await response.json();
+      setStatus(true);
+      console.log('✔ 已從伺服器載入資料');
+      return;
+    }
+  } catch(e) {
+    console.warn('⚠ 伺服器連線失敗:', e);
+  }
+  
+  // 備用：本機載入
+  try {
+    const saved = localStorage.getItem('company_db');
+    if (saved) {
+      db = JSON.parse(saved);
+      setStatus(false);
+      console.log('ℹ 使用本機資料（離線模式）');
+    }
+  } catch(e) {}
+}
+
+// 儲存資料
+async function saveData() {
+  // 先存本機
+  localStorage.setItem('company_db', JSON.stringify(db));
+  
+  // 再上傳伺服器
+  try {
+    const response = await fetch(API_URL + '/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(db)
+    });
+    
+    if (response.ok) {
+      setStatus(true);
+      console.log('✔ 資料已同步');
+      return true;
+    }
+  } catch(e) {
+    console.warn('⚠ 同步失敗:', e);
+    setStatus(false);
+  }
+  
+  return false;
+}
+
+// 自動同步
+async function autoSync() {
+  if (!isConnected) return;
+  
+  try {
+    const response = await fetch(API_URL + '/api/data');
+    if (response.ok) {
+      const serverData = await response.json();
+      if (JSON.stringify(serverData) !== JSON.stringify(db)) {
+        db = serverData;
+        render();
+        console.log('🔄 已從伺服器同步最新資料');
+      }
+    }
+  } catch(e) {}
+}
+
+// 手動同步
+async function syncNow() {
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  
+  const status = document.getElementById('status');
+  status.classList.add('syncing');
+  document.getElementById('status-text').textContent = '同步中...';
+  
+  await loadData();
+  render();
+  
+  setTimeout(() => {
+    btn.disabled = false;
+    setStatus(isConnected);
+  }, 1000);
+}
+
+// 設定狀態
+function setStatus(connected) {
+  isConnected = connected;
+  const status = document.getElementById('status');
+  const text = document.getElementById('status-text');
+  
+  if (connected) {
+    status.className = 'status connected';
+    text.textContent = '✔ 已連線';
+  } else {
+    status.className = 'status';
+    text.textContent = '⚠ 離線模式';
+  }
+}
+
+// 新增排
+async function addPlatoon() {
+  const name = document.getElementById('platoonNameInput').value.trim();
+  if (!name) {
+    alert('請輸入排名稱');
+    return;
+  }
+  
+  db.platoons.push({
+    id: Date.now(),
+    name: name,
+    squads: []
+  });
+  
+  await saveData();
+  render();
+  closeDialog('addPlatoonDialog');
+  document.getElementById('platoonNameInput').value = '';
+}
+
+// 新增班
+async function addSquad() {
+  const name = document.getElementById('squadNameInput').value.trim();
+  if (!name) {
+    alert('請輸入班名稱');
+    return;
+  }
+  
+  const platoon = db.platoons.find(p => p.id === currentPlatoonId);
+  if (!platoon) return;
+  
+  if (!platoon.squads) platoon.squads = [];
+  platoon.squads.push({
+    id: Date.now(),
+    name: name,
+    members: []
+  });
+  
+  await saveData();
+  render();
+  closeDialog('addSquadDialog');
+  document.getElementById('squadNameInput').value = '';
+}
+
+// 新增人員
+async function addMember() {
+  const name = document.getElementById('memberNameInput').value.trim();
+  const rank = document.getElementById('memberRankInput').value.trim();
+  const id = document.getElementById('memberIdInput').value.trim();
+  
+  if (!name) {
+    alert('請輸入姓名');
+    return;
+  }
+  
+  const platoon = db.platoons.find(p => p.id === currentPlatoonId);
+  if (!platoon) return;
+  
+  const squad = platoon.squads.find(s => s.id === currentSquadId);
+  if (!squad) return;
+  
+  if (!squad.members) squad.members = [];
+  squad.members.push({
+    id: Date.now(),
+    name: name,
+    rank: rank,
+    militaryId: id
+  });
+  
+  await saveData();
+  render();
+  closeDialog('addMemberDialog');
+  document.getElementById('memberNameInput').value = '';
+  document.getElementById('memberRankInput').value = '';
+  document.getElementById('memberIdInput').value = '';
+}
+
+// 刪除
+async function deletePlatoon(id) {
+  if (!confirm('確定刪除？')) return;
+  db.platoons = db.platoons.filter(p => p.id !== id);
+  await saveData();
+  render();
+}
+
+async function deleteSquad(platoonId, squadId) {
+  if (!confirm('確定刪除？')) return;
+  const p = db.platoons.find(x => x.id === platoonId);
+  if (p) p.squads = p.squads.filter(s => s.id !== squadId);
+  await saveData();
+  render();
+}
+
+async function deleteMember(platoonId, squadId, memberId) {
+  if (!confirm('確定刪除？')) return;
+  const p = db.platoons.find(x => x.id === platoonId);
+  if (p) {
+    const s = p.squads.find(x => x.id === squadId);
+    if (s) s.members = s.members.filter(m => m.id !== memberId);
+  }
+  await saveData();
+  render();
+}
+
+// 匯出
+function exportData() {
+  const json = JSON.stringify(db, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '全連人員管理_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// UI
+function openDialog(id) {
+  document.getElementById(id).classList.add('active');
+  setTimeout(() => {
+    const input = document.querySelector(`#${id} input`);
+    if (input) input.focus();
+  }, 100);
+}
+
+function closeDialog(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function openAddSquadDialog(platoonId) {
+  currentPlatoonId = platoonId;
+  openDialog('addSquadDialog');
+}
+
+function openAddMemberDialog(platoonId, squadId) {
+  currentPlatoonId = platoonId;
+  currentSquadId = squadId;
+  openDialog('addMemberDialog');
+}
+
+// 渲染
+function render() {
+  const container = document.getElementById('platoons');
+  
+  if (!db.platoons || db.platoons.length === 0) {
+    container.innerHTML = '<div style="color: #606858; text-align: center; padding: 40px;">還沒有排，點「➕ 新增排」開始</div>';
+    document.getElementById('total-count').textContent = '0';
+    return;
+  }
+  
+  let totalCount = 0;
+  let html = '';
+  
+  for (const platoon of db.platoons) {
+    let memberCount = 0;
+    let squadsHtml = '';
+    
+    if (platoon.squads && platoon.squads.length > 0) {
+      for (const squad of platoon.squads) {
+        const count = squad.members ? squad.members.length : 0;
+        memberCount += count;
+        totalCount += count;
+        
+        let membersHtml = '';
+        if (squad.members && squad.members.length > 0) {
+          for (const member of squad.members) {
+            membersHtml += `
+              <div class="member">
+                <div class="member-info">
+                  <div class="member-name">${member.name}</div>
+                  <div class="member-rank">${member.rank} ${member.militaryId}</div>
+                </div>
+                <button onclick="deleteMember(${platoon.id}, ${squad.id}, ${member.id})">🗑️</button>
+              </div>
+            `;
+          }
+        }
+        
+        squadsHtml += `
+          <div class="squad">
+            <div class="squad-title">${squad.name} (${count}人)</div>
+            <div class="members">${membersHtml || '<div class="muted">無人員</div>'}</div>
+            <div class="squad-actions">
+              <button onclick="openAddMemberDialog(${platoon.id}, ${squad.id})">➕ 人員</button>
+              <button onclick="deleteSquad(${platoon.id}, ${squad.id})">🗑️ 班</button>
+            </div>
+          </div>
+        `;
+      }
+    } else {
+      squadsHtml = '<div class="muted">無班</div>';
+    }
+    
+    html += `
+      <div class="platoon">
+        <div class="platoon-header" onclick="this.nextElementSibling.classList.toggle('expanded')">
+          <span>${platoon.name} (${memberCount}人)</span>
+          <span>▼</span>
+        </div>
+        <div class="platoon-body expanded">
+          <button onclick="openAddSquadDialog(${platoon.id})">➕ 新增班</button>
+          <button onclick="deletePlatoon(${platoon.id})">🗑️ 刪除排</button>
+          ${squadsHtml}
+        </div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+  document.getElementById('total-count').textContent = totalCount;
+}
+
+// 啟動
+init();
+</script>
+
+</body>
+</html>
