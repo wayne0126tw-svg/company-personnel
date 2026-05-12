@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#181d10">
+<meta name="description" content="全連人員管理系統">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%233a4728' width='180' height='180'/><text x='50%' y='50%' font-size='80' fill='%23f0b535' text-anchor='middle' dominant-baseline='middle'>⚔</text></svg>">
+<title>全連人員管理系統</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
+
+:root {
+  --bg: #181d10;
+  --bg2: #1f2615;
+  --bg3: #252e18;
+  --olive: #3a4728;
+  --olive2: #4a5a34;
+  --khaki: #7a9050;
+  --khaki2: #a8bf72;
+  --amber: #c8902a;
+  --amber2: #f0b535;
+  --paper: #e5e0cc;
+  --paper2: #c8c2a8;
+  --ink: #12160c;
+  --muted: #606858;
+  --green: #3aad65;
+  --green2: #5dde8e;
+  --red: #b83528;
+  --red2: #f07060;
+  --blue: #2878b0;
+  --blue2: #68c0f0;
+  --yellow: #c09020;
+  --yellow2: #f0c840;
+  --border: rgba(120,144,80,0.25);
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(58,71,40,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(58,71,40,0.12) 0%, transparent 60%);
+  font-family:'Noto Sans TC',sans-serif;
+  color:var(--paper);
+  min-height:100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+  border-bottom: 2px solid var(--amber);
+  padding: 0 24px;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: var(--shadow);
+  min-height: 64px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px 12px 0;
+  border-right: 1px solid var(--border);
+  margin-right: 24px;
+}
+
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--olive);
+  border: 2px solid var(--amber2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.brand-text h1 {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--amber2);
+  white-space: nowrap;
+}
+
+.brand-text p {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-chip {
+  padding: 6px 14px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+
+.stat-chip .n {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.stat-chip .l {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.stat-chip.c-all .n    { color: var(--amber2); }
+.stat-chip.c-train .n  { color: var(--green2); }
+.stat-chip.c-leave .n  { color: var(--red2); }
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hbtn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--paper2);
+  font-family:'Noto Sans TC',sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+
+.hbtn:hover { border-color: var(--amber); color: var(--amber2); }
+
+.hbtn.primary {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.hbtn.primary:hover { background: var(--amber2); }
+
+/* ── FILTER BAR ── */
+.filterbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.fbtn {
+  padding: 5px 14px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: var(--paper2);
+  font-family:'Noto Sans TC',sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: 1px;
+}
+
+.fbtn:hover { border-color: var(--khaki); color: var(--khaki2); }
+.fbtn.active { background: var(--amber); border-color: var(--amber); color: var(--ink); font-weight: 700; }
+
+.search-wrap {
+  margin-left: auto;
+  position: relative;
+}
+
+.search-wrap input {
+  padding: 6px 12px 6px 32px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--paper);
+  font-family:'Share Tech Mono',monospace;
+  font-size: 12px;
+  width: 200px;
+  outline: none;
+  transition: border-color .18s;
+}
+
+.search-wrap input:focus { border-color: var(--amber); }
+.search-wrap input::placeholder { color: var(--muted); }
+
+.search-wrap::before {
+  content: '🔍';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* ── MAIN ── */
+main { padding: 20px 24px 40px; }
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--muted);
+  font-family:'Share Tech Mono',monospace;
+  letter-spacing: 3px;
+  font-size: 13px;
+}
+
+.empty-state .big { font-size: 48px; margin-bottom: 16px; }
+
+/* ── PLATOON ── */
+.platoon-wrap {
+  margin-bottom: 28px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg,var(--bg2),var(--bg3));
+  overflow: hidden;
+}
+
+.platoon-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--olive);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+}
+
+.platoon-bar:hover { background: var(--olive2); }
+
+.platoon-chevron {
+  font-size: 11px;
+  color: var(--khaki);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+
+.platoon-wrap.collapsed .platoon-chevron { transform: rotate(-90deg); }
+
+.platoon-tag {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 11px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--khaki);
+  color: var(--amber2);
+  padding: 2px 10px;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+.platoon-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--khaki2);
+  flex: 1;
+}
+
+.platoon-meta {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.platoon-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover.edit { border-color: var(--amber); color: var(--amber2); }
+.icon-btn:hover.del { border-color: var(--red); color: var(--red2); }
+.icon-btn:hover.add { border-color: var(--green); color: var(--green2); }
+
+.platoon-body {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  transition: all .2s;
+}
+
+.platoon-wrap.collapsed .platoon-body { display: none; }
+
+/* squad add btn inside grid */
+.squad-add-tile {
+  border: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .15s;
+  min-height: 100px;
+}
+
+.squad-add-tile:hover { border-color: var(--khaki); color: var(--khaki2); }
+
+/* ── SQUAD ── */
+.squad-card {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  overflow: hidden;
+  transition: border-color .15s;
+}
+
+.squad-card:hover { border-color: var(--olive2); }
+
+.squad-head {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.25);
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.squad-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--amber);
+  flex: 1;
+}
+
+.squad-count {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.squad-actions { display: flex; gap: 4px; }
+
+.m-until {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+/* ── MEMBER ROW ── */
+.member-list { padding: 4px 0; }
+
+.member-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: background .12s;
+  cursor: pointer;
+}
+
+.member-row:last-child { border-bottom: none; }
+.member-row:hover { background: rgba(255,255,255,0.05); }
+
+.m-rank {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 11px;
+  color: var(--khaki);
+  min-width: 44px;
+  flex-shrink: 0;
+}
+
+.m-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.m-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.b-train  { background:rgba(58,173,101,.18);  color:var(--green2);  border:1px solid rgba(58,173,101,.35); }
+.b-leave  { background:rgba(184,53,40,.18);   color:var(--red2);    border:1px solid rgba(184,53,40,.35); }
+.b-incamp { background:rgba(120,144,80,.18);  color:var(--khaki2);  border:1px solid rgba(120,144,80,.35);}
+.b-recruit{ background:rgba(200,144,42,.18);  color:var(--amber2);  border:1px solid rgba(200,144,42,.35);}
+.b-attach { background:rgba(100,80,160,.18);  color:#c0a8f0;        border:1px solid rgba(100,80,160,.35);}
+.b-support{ background:rgba(40,140,160,.18);  color:#70d8f0;        border:1px solid rgba(40,140,160,.35);}
+
+.stat-chip.c-incamp  .n { color: var(--khaki2); }
+.stat-chip.c-recruit .n { color: var(--amber2); }
+.stat-chip.c-attach  .n { color: #c0a8f0; }
+.stat-chip.c-support .n { color: #70d8f0; }
+
+.member-del-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .15s;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+}
+
+.member-row:hover .member-del-btn { color: var(--red2); }
+.member-del-btn:hover { color: var(--red) !important; }
+
+.add-member-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-top: 1px dashed rgba(255,255,255,0.06);
+  transition: color .15s;
+}
+
+.add-member-row:hover { color: var(--green2); }
+
+/* ── MODALS / DIALOGS ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.overlay.open { display: flex; animation: fadeIn .18s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.dialog {
+  background: var(--bg2);
+  border: 2px solid var(--amber);
+  width: 100%;
+  box-shadow: 0 0 60px rgba(200,144,42,.2);
+  animation: slideUp .22s ease;
+  position: relative;
+}
+
+@keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:none;opacity:1} }
+
+.dialog-head {
+  background: var(--olive);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--amber);
+}
+
+.dialog-title {
+  font-family:'Share Tech Mono',monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--amber2);
+}
+
+.dialog-close {
+  background: none;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.dialog-close:hover { border-color: var(--red2); color: var(--red2); background: rgba(184,53,40,.1); }
+
+.profile-footer {
+  justify-content: space-between !important;
+  align-items: center;
+}
+
+.profile-back {
+  color: var(--khaki2) !important;
+  border-color: var(--khaki) !important;
+  font-size: 13px !important;
+  letter-spacing: 1px !important;
+}
+
+.profile-back:hover {
+  background: rgba(120,144,80,.15) !important;
+  color: var(--amber2) !important;
+}
+
+/* dialog body scrollable on small screens */
+.dialog-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dialog-close:hover { color: var(--paper); }
+
+.dialog-body { padding: 20px; }
+.dialog-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── FORM ELEMENTS ── */
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--muted); margin-bottom: 5px; }
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--paper);
+  font-family:'Noto Sans TC',sans-serif;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus { border-color: var(--amber); }
+
+.form-row textarea { min-height: 64px; resize: vertical; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.info-cell {
+  background: rgba(0,0,0,0.2);
+  padding: 8px 12px;
+  border-left: 2px solid var(--olive2);
+}
+
+.info-cell .k { font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 3px; }
+.info-cell .v { font-family:'Share Tech Mono',monospace; font-size: 12px; color: var(--paper); }
+
+/* person profile header */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  background: var(--olive);
+  border: 2px solid var(--khaki);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.profile-name { font-size: 22px; font-weight: 900; letter-spacing: 4px; color: var(--amber2); }
+.profile-rank { font-family:'Share Tech Mono',monospace; font-size: 12px; color: var(--khaki2); letter-spacing: 2px; margin-top: 2px; }
+
+/* status bar in profile */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.status-row label { font-size: 10px; letter-spacing: 2px; color: var(--muted); white-space: nowrap; }
+.status-row select { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--paper); font-family:'Noto Sans TC',sans-serif; font-size: 13px; padding: 4px 8px; outline: none; }
+.status-row select:focus { border-color: var(--amber); }
+
+/* ── BUTTONS ── */
+.btn { padding: 8px 18px; font-family:'Noto Sans TC',sans-serif; font-size: 12px; letter-spacing: 1px; cursor: pointer; border: none; font-weight: 700; transition: opacity .15s; }
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--amber); color: var(--ink); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-ghost { background: transparent; border: 1px solid var(--muted); color: var(--muted); font-weight: 400; }
+
+/* ── CONFIRM DIALOG ── */
+.confirm-msg { font-size: 14px; line-height: 1.7; color: var(--paper2); margin-bottom: 6px; }
+.confirm-sub { font-size: 12px; color: var(--red2); letter-spacing: 1px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--olive);
+  border: 1px solid var(--amber);
+  color: var(--amber2);
+  font-family:'Share Tech Mono',monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  padding: 11px 18px;
+  z-index: 999;
+  transform: translateY(60px);
+  opacity: 0;
+  transition: all .28s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+  max-width: 260px;
+}
+
+.toast.show { transform: none; opacity: 1; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px) {
+  .stat-chip { padding: 6px 8px; }
+  .stat-chip:not(.c-all):not(.c-incamp):not(.c-train) { display: none; }
+  .brand-text p { display: none; }
+  .platoon-body { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-brand">
+    <div class="brand-icon">⚔</div>
+    <div class="brand-text">
+      <h1>全連人員管理</h1>
+      <p>COMPANY PERSONNEL SYSTEM</p>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-chip c-all"><div class="n" id="s-all">0</div><div class="l">總人數</div></div>
+    <div class="stat-chip c-incamp"><div class="n" id="s-incamp">0</div><div class="l">在部</div></div>
+    <div class="stat-chip c-train"><div class="n" id="s-train">0</div><div class="l">受訓</div></div>
+    <div class="stat-chip c-leave"><div class="n" id="s-leave">0</div><div class="l">放假</div></div>
+    <div class="stat-chip c-recruit"><div class="n" id="s-recruit">0</div><div class="l">招募</div></div>
+    <div class="stat-chip c-attach"><div class="n" id="s-attach">0</div><div class="l">合署</div></div>
+    <div class="stat-chip c-support"><div class="n" id="s-support">0</div><div class="l">支援</div></div>
+  </div>
+  <div class="header-actions">
+    <button class="hbtn" onclick="exportData()">📤 匯出</button>
+    <button class="hbtn" onclick="triggerImport()">📥 匯入</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="hbtn primary" onclick="openAddPlatoon()">＋ 新增排</button>
+  </div>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filterbar">
+  <button class="fbtn active" onclick="setFilter('all',this)">全部</button>
+  <button class="fbtn" onclick="setFilter('在部',this)">在部</button>
+  <button class="fbtn" onclick="setFilter('受訓中',this)">受訓中</button>
+  <button class="fbtn" onclick="setFilter('放假',this)">放假</button>
+  <button class="fbtn" onclick="setFilter('招募',this)">招募</button>
+  <button class="fbtn" onclick="setFilter('合署',this)">合署</button>
+  <button class="fbtn" onclick="setFilter('支援',this)">支援</button>
+  <div class="search-wrap">
+    <input type="text" placeholder="姓名 / 軍號..." oninput="doSearch(this.value)">
+  </div>
+</div>
+
+<!-- MAIN -->
+<main id="app"></main>
+
+<!-- ══════════════ DIALOGS ══════════════ -->
+
+<!-- Platoon name dialog -->
+<div class="overlay" id="dl-platoon">
+  <div class="dialog" style="max-width:380px">
+    <div class="dialog-head">
+      <span class="dialog-title" id="dl-platoon-title">新增排</span>
+      <button class="dialog-close" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>排別名稱</label>
+        <input id="dp-name" type="text" placeholder="例：第一排">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost" onclick="closeAll()">取消</button>
+      <button class="btn btn-primary" onclick="savePlatoon()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Squad name dialog -->
+<div class="overlay" id="dl-squad">
+  <div class="dialog" style="max-width:380px">
+    <div class="dialog-head">
+      <span class="dialog-title" id="dl-squad-title">新增班</span>
+      <button class="dialog-close" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-row">
+        <label>班別名稱</label>
+        <input id="ds-name" type="text" placeholder="例：第一班">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost" onclick="closeAll()">取消</button>
+      <button class="btn btn-primary" onclick="saveSquad()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Member dialog -->
+<div class="overlay" id="dl-member">
+  <div class="dialog" style="max-width:460px">
+    <div class="dialog-head">
+      <span class="dialog-title" id="dl-member-title">新增人員</span>
+      <button class="dialog-close" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-grid">
+        <div class="form-row">
+          <label>姓　　名 *</label>
+          <input id="dm-name" type="text" placeholder="陳大明">
+        </div>
+        <div class="form-row">
+          <label>階　　級 *</label>
+          <select id="dm-rank">
+            <option>二等兵</option><option>一等兵</option><option selected>一兵</option>
+            <option>上兵</option><option>下士</option><option>中士</option>
+            <option>上士</option><option>少尉</option><option>中尉</option><option>上尉</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>軍　　號</label>
+          <input id="dm-id" type="text" placeholder="A001">
+        </div>
+        <div class="form-row">
+          <label>入伍日期</label>
+          <input id="dm-enlist" type="text" placeholder="113.01.10">
+        </div>
+        <div class="form-row">
+          <label>連絡電話</label>
+          <input id="dm-phone" type="text" placeholder="0912-345-678">
+        </div>
+        <div class="form-row">
+          <label>緊急聯絡</label>
+          <input id="dm-emergency" type="text" placeholder="父 0933-...">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>目前狀態</label>
+          <select id="dm-status">
+            <option value="在部" selected>在部</option>
+            <option value="受訓中">受訓中</option>
+            <option value="放假">放假</option>
+            <option value="招募">招募</option>
+            <option value="合署">合署</option>
+            <option value="支援">支援</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>受訓開始日期</label>
+          <input id="dm-train-start" type="text" placeholder="例：114.06.01">
+        </div>
+        <div class="form-row">
+          <label>受訓結束日期</label>
+          <input id="dm-train-end" type="text" placeholder="例：114.06.30">
+        </div>
+        <div class="form-row">
+          <label>出生年月日</label>
+          <input id="dm-birth-date" type="text" placeholder="例：民國95.12.15（或西元1902.12.15）">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>備　　注</label>
+        <textarea id="dm-notes" placeholder="例：週日歸隊、今日值衛兵..."></textarea>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost" onclick="closeAll()">取消</button>
+      <button class="btn btn-primary" onclick="saveMember()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- View/Edit Member profile -->
+<div class="overlay" id="dl-profile">
+  <div class="dialog" style="max-width:480px">
+    <div class="dialog-head">
+      <span class="dialog-title">人員資料 // PERSONNEL FILE</span>
+      <button class="dialog-close" onclick="closeAll()" title="關閉 (ESC)">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="profile-header">
+        <div class="profile-avatar">👤</div>
+        <div>
+          <div class="profile-name" id="pf-name">—</div>
+          <div class="profile-rank" id="pf-rank">—</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;" id="pf-location">—</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>姓　　名</label>
+          <input id="pf-input-name" type="text">
+        </div>
+        <div class="form-row">
+          <label>階　　級</label>
+          <select id="pf-input-rank">
+            <option>兵</option><option>二兵</option><option>一兵</option>
+            <option>上兵</option><option>下士</option><option>中士</option>
+            <option>上士</option><option>士長</option><option>少尉</option><option>中尉</option><option>上尉</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>軍　　號</label>
+          <input id="pf-input-id" type="text" placeholder="—">
+        </div>
+        <div class="form-row">
+          <label>入伍日期</label>
+          <input id="pf-input-enlist" type="text" placeholder="113.01.10">
+        </div>
+        <div class="form-row">
+          <label>連絡電話</label>
+          <input id="pf-input-phone" type="text" placeholder="0912-345-678">
+        </div>
+        <div class="form-row">
+          <label>緊急聯絡</label>
+          <input id="pf-input-emergency" type="text" placeholder="父 0933-...">
+        </div>
+        <div class="form-row">
+          <label>目前狀態</label>
+          <select id="pf-status">
+            <option value="在部">在部</option>
+            <option value="受訓中">受訓中</option>
+            <option value="放假">放假</option>
+            <option value="招募">招募</option>
+            <option value="合署">合署</option>
+            <option value="支援">支援</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>出生年月日</label>
+          <input id="pf-input-birth-date" type="text" placeholder="例：民國95.12.15">
+        </div>
+        <div class="form-row">
+          <label>年　　　齡</label>
+          <div id="pf-age-display" style="padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid var(--border);color:var(--khaki2);font-weight:700;">計算中...</div>
+        </div>
+        <div class="form-row">
+          <label>受訓開始日期</label>
+          <input id="pf-input-train-start" type="text" placeholder="例：114.06.01">
+        </div>
+        <div class="form-row">
+          <label>受訓結束日期</label>
+          <input id="pf-input-train-end" type="text" placeholder="例：114.06.30">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>備　　注</label>
+        <textarea id="pf-notes" placeholder="備注..."></textarea>
+      </div>
+    </div>
+    <div class="dialog-footer profile-footer">
+      <button class="btn btn-ghost profile-back" onclick="closeAll()">← 返回</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="closeAll()">取消</button>
+        <button class="btn btn-primary" onclick="saveProfile()">✔ 儲存變更</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="overlay" id="dl-confirm">
+  <div class="dialog" style="max-width:360px">
+    <div class="dialog-head">
+      <span class="dialog-title">確認操作</span>
+      <button class="dialog-close" onclick="closeAll()">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="confirm-msg" id="confirm-msg">確定要刪除嗎？</div>
+      <div class="confirm-sub" id="confirm-sub"></div>
+    </div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost" onclick="closeAll()">取消</button>
+      <button class="btn btn-danger" id="confirm-ok">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const STORE_KEY = 'company_mgmt_v4';
+
+function defaultData() {
+  return { platoons: [
+    { id: uid(), name: '連部', squads: [
+      { id: uid(), name: '連部', members: [
+        make('張佑寧','士長','','','','','在部',''),
+        make('許智凱','中士','','','','','在部',''),
+        make('劉建德','中士','','','','','在部',''),
+        make('陳彥成','下士','','','','','在部',''),
+      ]}
+    ]},
+    { id: uid(), name: '一排', squads: [
+      { id: uid(), name: '排部', members: [
+        make('蕭安筑','士長','','','','','在部',''),
+        make('陳鴻鈞','下士','','','','','在部',''),
+      ]},
+      { id: uid(), name: '一班', members: [
+        make('周冠諺','上士','','','','','在部',''),
+        make('邱智賢','中士','','','','','在部',''),
+        make('周楷勝','下士','','','','','在部',''),
+        make('李柏學','一兵','','','','','在部',''),
+        make('（待補）','二兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '二班', members: [
+        make('賴界宏','上士','','','','','在部',''),
+        make('呂哲維','中士','','','','','在部',''),
+        make('（待補）','下士','','','','','在部',''),
+        make('袁光宇','上兵','','','','','在部',''),
+        make('許弼堯','二兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '三班', members: [
+        make('羅宗仁','上士','','','','','在部',''),
+        make('尚易緯','中士','','','','','在部',''),
+        make('王玟琇','下士','','','','','在部',''),
+        make('尤昶鈞','二兵','','','','','在部',''),
+        make('林煒格','上兵','','','','','在部',''),
+      ]},
+    ]},
+    { id: uid(), name: '二排', squads: [
+      { id: uid(), name: '排部', members: [
+        make('施和平','士長','','','','','在部',''),
+        make('（待補）','下士','','','','','在部',''),
+      ]},
+      { id: uid(), name: '四班', members: [
+        make('陳克元','上士','','','','','在部',''),
+        make('（待補）','中士','','','','','在部',''),
+        make('余家寶','下士','','','','','在部',''),
+        make('伍哲宇','二兵','','','','','在部',''),
+        make('徐佑誠','一兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '五班', members: [
+        make('（待補）','上士','','','','','在部',''),
+        make('許文富','中士','','','','','在部',''),
+        make('許峻豪','下士','','','','','在部',''),
+        make('黃彥禎','二兵','','','','','在部',''),
+        make('李柏緯','一兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '六班', members: [
+        make('胡夢恆','上士','','','','','在部',''),
+        make('曾仕龍','中士','','','','','在部',''),
+        make('洪政賢','下士','','','','','在部',''),
+        make('陳必增','二兵','','','','','在部',''),
+        make('左少麒','一兵','','','','','在部',''),
+      ]},
+    ]},
+    { id: uid(), name: '三排', squads: [
+      { id: uid(), name: '排部', members: [
+        make('陳煥宗','士長','','','','','在部',''),
+        make('蕭宇竣','下士','','','','','在部',''),
+      ]},
+      { id: uid(), name: '七班', members: [
+        make('董永欽','上士','','','','','在部',''),
+        make('黃旨鏇','中士','','','','','在部',''),
+        make('鍾麒安','下士','','','','','在部',''),
+        make('湯政瑋','二兵','','','','','在部',''),
+        make('吳聖憶','上兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '八班', members: [
+        make('陳佳瑋','上士','','','','','在部',''),
+        make('葉庭滈','中士','','','','','在部',''),
+        make('（待補）','下士','','','','','在部',''),
+        make('（待補）','上兵','','','','','在部',''),
+        make('林宥錚','一兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '九班', members: [
+        make('張嘉浤','上士','','','','','在部',''),
+        make('蘇泓逸','中士','','','','','在部',''),
+        make('林鈺修','下士','','','','','在部',''),
+        make('吳昱緯','二兵','','','','','在部',''),
+        make('黃聖安','上兵','','','','','在部',''),
+      ]},
+    ]},
+    { id: uid(), name: '四排', squads: [
+      { id: uid(), name: '排部', members: [
+        make('陳柏凱','士長','','','','','在部',''),
+        make('（待補）','下士','','','','','在部',''),
+      ]},
+      { id: uid(), name: '十班', members: [
+        make('潘勇叡','上士','','','','','在部',''),
+        make('姆桑里幸','中士','','','','','在部',''),
+        make('（待補）','下士','','','','','在部',''),
+        make('王政友','二兵','','','','','在部',''),
+        make('江改順','上兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '十一班', members: [
+        make('陳柏勳','上士','','','','','在部',''),
+        make('白峻良','中士','','','','','在部',''),
+        make('張庭祥','下士','','','','','在部',''),
+        make('張翊祐','上兵','','','','','在部',''),
+        make('蔡廷謚','二兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '十二班', members: [
+        make('蔡友淵','上士','','','','','在部',''),
+        make('黃梓銘','中士','','','','','在部',''),
+        make('林正平','下士','','','','','在部',''),
+        make('王揚智','一兵','','','','','在部',''),
+        make('魏文良','一兵','','','','','在部',''),
+      ]},
+    ]},
+    { id: uid(), name: '五排', squads: [
+      { id: uid(), name: '排部', members: [
+        make('李文棟','士長','','','','','在部',''),
+        make('（待補）','下士','','','','','在部',''),
+      ]},
+      { id: uid(), name: '十三班', members: [
+        make('王俊昇','上士','','','','','在部',''),
+        make('莊智宇','中士','','','','','在部',''),
+        make('方文豪','下士','','','','','在部',''),
+        make('楊宏文','一兵','','','','','在部',''),
+        make('賴少曄','二兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '十四班', members: [
+        make('（待補）','上士','','','','','在部',''),
+        make('田凱恩','中士','','','','','在部',''),
+        make('洪文正','下士','','','','','在部',''),
+        make('張子亦','一兵','','','','','在部',''),
+        make('祁政伍','上兵','','','','','在部',''),
+      ]},
+      { id: uid(), name: '十五班', members: [
+        make('林尚毅','上士','','','','','在部',''),
+        make('洪豊禮','中士','','','','','在部',''),
+        make('程韜','下士','','','','','在部',''),
+        make('（待補）','兵','','','','','在部',''),
+        make('（待補）','兵','','','','','在部',''),
+      ]},
+    ]},
+  ]};
+}
+
+function make(name,rank,id,enlist,phone,emergency,status,notes,trainStart,trainEnd,birthDate) {
+  return { _id:uid(), name, rank, id, enlist, phone, emergency, status, notes, trainStart:trainStart||'', trainEnd:trainEnd||'', birthDate:birthDate||'' };
+}
+
+function uid() { return Math.random().toString(36).slice(2,8); }
+
+let db = loadDb();
+let filterStatus = 'all';
+let searchQ = '';
+
+// dialog state
+let editingPlatoonId = null;   // null = add, else edit
+let editingSquadId = null;
+let addingSquadToPlatoonId = null;
+let addingMemberToSquadId = null;
+let editingMemberId = null;
+let profileMemberId = null;
+let confirmCallback = null;
+
+// ══════════════════════════════════════════
+//  PERSISTENCE
+// ══════════════════════════════════════════
+function loadDb() {
+  try { const d = localStorage.getItem(STORE_KEY); if (d) return JSON.parse(d); } catch(e){}
+  return defaultData();
+}
+
+function saveDb() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){}
+}
+
+// ══════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════
+function findPlatoon(pid) { return db.platoons.find(p=>p.id===pid); }
+function findSquad(sid) {
+  for (const pl of db.platoons) {
+    const sq = pl.squads.find(s=>s.id===sid);
+    if (sq) return { platoon: pl, squad: sq };
+  }
+  return null;
+}
+function findMember(mid) {
+  for (const pl of db.platoons)
+    for (const sq of pl.squads)
+      for (const m of sq.members)
+        if (m._id===mid) return { platoon:pl, squad:sq, member:m };
+  return null;
+}
+
+function statusBadge(s) {
+  const map = {
+    '在部':'b-incamp', '受訓中':'b-train', '放假':'b-leave',
+    '招募':'b-recruit', '合署':'b-attach', '支援':'b-support'
+  };
+  return `<span class="m-badge ${map[s]||'b-incamp'}">${s}</span>`;
+}
+
+// 民國日期字串（114.06.30 或 114/06/30）轉 JS Date
+function parseROCDate(str) {
+  if (!str) return null;
+  const m = str.replace(/\//g,'.').match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!m) return null;
+  const year = parseInt(m[1]) + 1911;
+  return new Date(year, parseInt(m[2])-1, parseInt(m[3]));
+}
+
+// 計算年齡
+function calcAge(birthDateStr) {
+  if (!birthDateStr) return null;
+  const d = parseROCDate(birthDateStr);
+  if (!d) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return Math.max(0, age);
+}
+function trainPeriodHtml(member) {
+  if (!member.trainStart || !member.trainEnd) return '';
+  return `<span class="m-until" title="受訓期間：${member.trainStart} ~ ${member.trainEnd}">${member.trainStart}~${member.trainEnd}</span>`;
+}
+
+// 自動檢查：在受訓時間區間內 → 「受訓中」，否則按原狀態（在部/招募/合署/支援/放假）
+function checkTrainingExpiry() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  let changed = false;
+  db.platoons.forEach(pl=>pl.squads.forEach(sq=>sq.members.forEach(m=>{
+    if (m.trainStart && m.trainEnd) {
+      const start = parseROCDate(m.trainStart);
+      const end = parseROCDate(m.trainEnd);
+      const inTraining = start && end && (now >= start && now <= end);
+      
+      if (inTraining && m.status !== '受訓中') {
+        m.status = '受訓中';
+        changed = true;
+      } else if (!inTraining && m.status === '受訓中') {
+        // 恢復為在部（默認狀態）
+        m.status = '在部';
+        changed = true;
+      }
+    }
+  })));
+  if (changed) saveDb();
+}
+
+function matchFilter(m) {
+  if (filterStatus !== 'all' && m.status !== filterStatus) return false;
+  if (searchQ) {
+    const q = searchQ.toLowerCase();
+    return m.name.includes(q) || (m.id||'').toLowerCase().includes(q) || m.rank.includes(q);
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function render() {
+  checkTrainingExpiry();
+  const app = document.getElementById('app');
+  let total=0, train=0, leave=0, incamp=0, recruit=0, attach=0, support=0;
+
+  db.platoons.forEach(pl=>pl.squads.forEach(sq=>sq.members.forEach(m=>{
+    // 待補不計入人數
+    if (m.name && !m.name.includes('待補')) {
+      total++;
+      if(m.status==='受訓中') train++;
+      if(m.status==='放假')   leave++;
+      if(m.status==='在部')   incamp++;
+      if(m.status==='招募')   recruit++;
+      if(m.status==='合署')   attach++;
+      if(m.status==='支援')   support++;
+    }
+  })));
+
+  document.getElementById('s-all').textContent     = total;
+  document.getElementById('s-incamp').textContent  = incamp;
+  document.getElementById('s-train').textContent   = train;
+  document.getElementById('s-leave').textContent   = leave;
+  document.getElementById('s-recruit').textContent = recruit;
+  document.getElementById('s-attach').textContent  = attach;
+  document.getElementById('s-support').textContent = support;
+
+  if (!db.platoons.length) {
+    app.innerHTML=`<div class="empty-state"><div class="big">🪖</div>尚無任何排別<br><br>點擊右上角「＋ 新增排」開始建立</div>`;
+    return;
+  }
+
+  let html='';
+  db.platoons.forEach(pl => {
+    const plTotal = pl.squads.reduce((a,s)=>a+s.members.length,0);
+    const plTrain = pl.squads.reduce((a,s)=>a+s.members.filter(m=>m.status==='受訓中').length,0);
+
+    // squads
+    let squadsHtml='';
+    pl.squads.forEach(sq => {
+      const visible = sq.members.filter(matchFilter);
+      const sqTrain = sq.members.filter(m=>m.status==='受訓中').length;
+
+      let membersHtml = visible.map(m=>`
+        <div class="member-row" onclick="openProfile('${m._id}')">
+          <span class="m-rank">${m.rank}</span>
+          <span class="m-name">${m.name}</span>
+          ${trainPeriodHtml(m)}
+          ${statusBadge(m.status)}
+          <button class="member-del-btn" onclick="event.stopPropagation();confirmDeleteMember('${m._id}')">✕</button>
+        </div>
+      `).join('');
+
+      squadsHtml += `
+        <div class="squad-card">
+          <div class="squad-head">
+            <span class="squad-name">${sq.name}</span>
+            <span class="squad-count">${sqTrain}/${sq.members.length}</span>
+            <div class="squad-actions">
+              <button class="icon-btn edit" title="編輯班名" onclick="openEditSquad('${sq.id}')">✎</button>
+              <button class="icon-btn del" title="刪除此班" onclick="confirmDeleteSquad('${sq.id}')">🗑</button>
+            </div>
+          </div>
+          <div class="member-list">${membersHtml}</div>
+          <div class="add-member-row" onclick="openAddMember('${sq.id}')">＋ 新增人員</div>
+        </div>
+      `;
+    });
+
+    squadsHtml += `
+      <div class="squad-add-tile" onclick="openAddSquad('${pl.id}')">
+        ＋ 新增班別
+      </div>
+    `;
+
+    html += `
+      <div class="platoon-wrap" id="pw-${pl.id}">
+        <div class="platoon-bar" onclick="togglePlatoon('${pl.id}')">
+          <span class="platoon-chevron">▼</span>
+          <span class="platoon-tag">${pl.id.toUpperCase()}</span>
+          <span class="platoon-title">${pl.name}</span>
+          <span class="platoon-meta">受訓 ${plTrain}/${plTotal} 員</span>
+          <div class="platoon-actions" onclick="event.stopPropagation()">
+            <button class="icon-btn edit" title="編輯排名" onclick="openEditPlatoon('${pl.id}')">✎</button>
+            <button class="icon-btn del" title="刪除此排" onclick="confirmDeletePlatoon('${pl.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="platoon-body">${squadsHtml}</div>
+      </div>
+    `;
+  });
+
+  app.innerHTML = html;
+}
+
+function togglePlatoon(pid) {
+  document.getElementById('pw-'+pid).classList.toggle('collapsed');
+}
+
+// ══════════════════════════════════════════
+//  FILTER / SEARCH
+// ══════════════════════════════════════════
+function setFilter(f, btn) {
+  filterStatus = f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function doSearch(v) { searchQ=v; render(); }
+
+// ══════════════════════════════════════════
+//  OVERLAY HELPERS
+// ══════════════════════════════════════════
+function openOverlay(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeAll() {
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'));
+  confirmCallback=null;
+  editingPlatoonId=editingSquadId=addingSquadToPlatoonId=addingMemberToSquadId=editingMemberId=profileMemberId=null;
+}
+
+// click backdrop
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) closeAll(); }));
+
+// ══════════════════════════════════════════
+//  PLATOON CRUD
+// ══════════════════════════════════════════
+function openAddPlatoon() {
+  editingPlatoonId=null;
+  document.getElementById('dl-platoon-title').textContent='新增排 // ADD PLATOON';
+  document.getElementById('dp-name').value='';
+  openOverlay('dl-platoon');
+  setTimeout(()=>document.getElementById('dp-name').focus(),100);
+}
+
+function openEditPlatoon(pid) {
+  editingPlatoonId=pid;
+  const pl=findPlatoon(pid);
+  document.getElementById('dl-platoon-title').textContent='編輯排名 // EDIT PLATOON';
+  document.getElementById('dp-name').value=pl.name;
+  openOverlay('dl-platoon');
+  setTimeout(()=>document.getElementById('dp-name').focus(),100);
+}
+
+function savePlatoon() {
+  const name=document.getElementById('dp-name').value.trim();
+  if (!name) return shake('dp-name');
+  if (editingPlatoonId) {
+    findPlatoon(editingPlatoonId).name=name;
+    toast('排別名稱已更新');
+  } else {
+    db.platoons.push({ id:uid(), name, squads:[] });
+    toast('已新增 '+name);
+  }
+  saveDb(); closeAll(); render();
+}
+
+function confirmDeletePlatoon(pid) {
+  const pl=findPlatoon(pid);
+  const total=pl.squads.reduce((a,s)=>a+s.members.length,0);
+  document.getElementById('confirm-msg').textContent=`確定刪除「${pl.name}」？`;
+  document.getElementById('confirm-sub').textContent=`此排包含 ${pl.squads.length} 個班、${total} 名人員，將全部刪除。`;
+  document.getElementById('confirm-ok').onclick=()=>{
+    db.platoons=db.platoons.filter(p=>p.id!==pid);
+    saveDb(); closeAll(); render(); toast('已刪除 '+pl.name);
+  };
+  openOverlay('dl-confirm');
+}
+
+// ══════════════════════════════════════════
+//  SQUAD CRUD
+// ══════════════════════════════════════════
+function openAddSquad(pid) {
+  addingSquadToPlatoonId=pid; editingSquadId=null;
+  document.getElementById('dl-squad-title').textContent='新增班 // ADD SQUAD';
+  document.getElementById('ds-name').value='';
+  openOverlay('dl-squad');
+  setTimeout(()=>document.getElementById('ds-name').focus(),100);
+}
+
+function openEditSquad(sid) {
+  const {squad}=findSquad(sid);
+  editingSquadId=sid;
+  document.getElementById('dl-squad-title').textContent='編輯班名 // EDIT SQUAD';
+  document.getElementById('ds-name').value=squad.name;
+  openOverlay('dl-squad');
+  setTimeout(()=>document.getElementById('ds-name').focus(),100);
+}
+
+function saveSquad() {
+  const name=document.getElementById('ds-name').value.trim();
+  if (!name) return shake('ds-name');
+  if (editingSquadId) {
+    findSquad(editingSquadId).squad.name=name;
+    toast('班別名稱已更新');
+  } else {
+    findPlatoon(addingSquadToPlatoonId).squads.push({ id:uid(), name, members:[] });
+    toast('已新增 '+name);
+  }
+  saveDb(); closeAll(); render();
+}
+
+function confirmDeleteSquad(sid) {
+  const {platoon,squad}=findSquad(sid);
+  document.getElementById('confirm-msg').textContent=`確定刪除「${squad.name}」？`;
+  document.getElementById('confirm-sub').textContent=`${squad.members.length} 名人員將一併刪除。`;
+  document.getElementById('confirm-ok').onclick=()=>{
+    platoon.squads=platoon.squads.filter(s=>s.id!==sid);
+    saveDb(); closeAll(); render(); toast('已刪除 '+squad.name);
+  };
+  openOverlay('dl-confirm');
+}
+
+// ══════════════════════════════════════════
+//  MEMBER CRUD
+// ══════════════════════════════════════════
+function openAddMember(sqid) {
+  addingMemberToSquadId=sqid; editingMemberId=null;
+  document.getElementById('dl-member-title').textContent='新增人員 // ADD MEMBER';
+  ['dm-name','dm-id','dm-enlist','dm-phone','dm-emergency','dm-notes','dm-train-start','dm-train-end','dm-birth-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('dm-rank').value='一兵';
+  document.getElementById('dm-status').value='在部';
+  openOverlay('dl-member');
+  setTimeout(()=>document.getElementById('dm-name').focus(),100);
+}
+
+function saveMember() {
+  const name=document.getElementById('dm-name').value.trim();
+  if (!name) return shake('dm-name');
+  const obj = {
+    _id: editingMemberId||uid(),
+    name,
+    rank: document.getElementById('dm-rank').value,
+    id: document.getElementById('dm-id').value.trim()||'—',
+    enlist: document.getElementById('dm-enlist').value.trim()||'—',
+    phone: document.getElementById('dm-phone').value.trim()||'—',
+    emergency: document.getElementById('dm-emergency').value.trim()||'—',
+    status: document.getElementById('dm-status').value,
+    notes: document.getElementById('dm-notes').value.trim(),
+    trainStart: document.getElementById('dm-train-start').value.trim(),
+    trainEnd: document.getElementById('dm-train-end').value.trim(),
+    birthDate: document.getElementById('dm-birth-date').value.trim(),
+  };
+  if (editingMemberId) {
+    const {squad,member}=findMember(editingMemberId);
+    Object.assign(member,obj);
+    toast('資料已更新');
+  } else {
+    findSquad(addingMemberToSquadId).squad.members.push(obj);
+    toast('已新增 '+name);
+  }
+  saveDb(); closeAll(); render();
+}
+
+function confirmDeleteMember(mid) {
+  const {squad,member}=findMember(mid);
+  document.getElementById('confirm-msg').textContent=`確定刪除「${member.name}」？`;
+  document.getElementById('confirm-sub').textContent='此操作無法復原。';
+  document.getElementById('confirm-ok').onclick=()=>{
+    squad.members=squad.members.filter(m=>m._id!==mid);
+    saveDb(); closeAll(); render(); toast('已刪除 '+member.name);
+  };
+  openOverlay('dl-confirm');
+}
+
+// ══════════════════════════════════════════
+//  PROFILE VIEW
+// ══════════════════════════════════════════
+function openProfile(mid) {
+  const found = findMember(mid);
+  if (!found) return;
+  const {platoon, squad, member} = found;
+  profileMemberId = mid;
+
+  // header display
+  document.getElementById('pf-name').textContent = member.name;
+  document.getElementById('pf-rank').textContent = member.rank;
+  document.getElementById('pf-location').textContent = platoon.name + ' › ' + squad.name;
+
+  // fill all inputs
+  document.getElementById('pf-input-name').value        = member.name || '';
+  document.getElementById('pf-input-rank').value        = member.rank || '一兵';
+  document.getElementById('pf-input-id').value          = (member.id && member.id !== '—') ? member.id : '';
+  document.getElementById('pf-input-enlist').value      = (member.enlist && member.enlist !== '—') ? member.enlist : '';
+  document.getElementById('pf-input-phone').value       = (member.phone && member.phone !== '—') ? member.phone : '';
+  document.getElementById('pf-input-emergency').value   = (member.emergency && member.emergency !== '—') ? member.emergency : '';
+  document.getElementById('pf-input-birth-date').value  = member.birthDate || '';
+  document.getElementById('pf-status').value            = member.status || '在部';
+  document.getElementById('pf-input-train-start').value = member.trainStart || '';
+  document.getElementById('pf-input-train-end').value   = member.trainEnd || '';
+  document.getElementById('pf-notes').value             = member.notes || '';
+  
+  // 計算年齡
+  const age = calcAge(member.birthDate);
+  document.getElementById('pf-age-display').textContent = age !== null ? age + ' 歲' : '—';
+
+  openOverlay('dl-profile');
+}
+
+function saveProfile() {
+  if (!profileMemberId) { toast('錯誤：找不到人員'); return; }
+  const found = findMember(profileMemberId);
+  if (!found) { toast('錯誤：人員不存在'); return; }
+  const {member} = found;
+
+  const newName = document.getElementById('pf-input-name').value.trim();
+  if (!newName) { shake('pf-input-name'); return; }
+
+  member.name      = newName;
+  member.rank      = document.getElementById('pf-input-rank').value;
+  member.id        = document.getElementById('pf-input-id').value.trim() || '—';
+  member.enlist    = document.getElementById('pf-input-enlist').value.trim() || '—';
+  member.phone     = document.getElementById('pf-input-phone').value.trim() || '—';
+  member.emergency = document.getElementById('pf-input-emergency').value.trim() || '—';
+  member.birthDate = document.getElementById('pf-input-birth-date').value.trim();
+  member.status    = document.getElementById('pf-status').value;
+  member.trainStart = document.getElementById('pf-input-train-start').value.trim();
+  member.trainEnd   = document.getElementById('pf-input-train-end').value.trim();
+  member.notes     = document.getElementById('pf-notes').value.trim();
+
+  saveDb();
+  closeAll();
+  render();
+  toast('✔ 已儲存');
+}
+
+// ══════════════════════════════════════════
+//  EXPORT / IMPORT
+// ══════════════════════════════════════════
+function exportData() {
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='全連人員_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('已匯出 JSON 檔案');
+}
+
+function triggerImport() { document.getElementById('import-file').click(); }
+
+function importData(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try {
+      const parsed=JSON.parse(ev.target.result);
+      if (!parsed.platoons) throw new Error();
+      db=parsed; saveDb(); render(); toast('匯入成功');
+    } catch {
+      toast('檔案格式錯誤');
+    }
+  };
+  r.readAsText(file);
+  e.target.value='';
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function shake(id) {
+  const el=document.getElementById(id);
+  el.style.borderColor='var(--red)';
+  el.focus();
+  setTimeout(()=>el.style.borderColor='',800);
+}
+
+let toastTimer;
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeAll();
+  if(e.key==='Enter') {
+    if(document.getElementById('dl-platoon').classList.contains('open')) savePlatoon();
+    else if(document.getElementById('dl-squad').classList.contains('open')) saveSquad();
+  }
+});
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+render();
+
+// 註冊 Service Worker（PWA 支援，失敗也能正常使用）
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  // 只在 HTTPS 或 localhost 時註冊
+  navigator.serviceWorker.register('./sw.js', { scope: './' }).then(reg => {
+    console.log('✔ Service Worker 已註冊');
+    // 每小時檢查更新
+    setInterval(() => reg.update(), 3600000);
+  }).catch(err => {
+    console.warn('⚠ Service Worker 註冊失敗（本機開發環境或HTTP）:', err.message);
+    console.log('提示：如需 PWA 功能，請上傳到支援 HTTPS 的伺服器');
+  });
+} else if (location.protocol !== 'https:') {
+  console.log('ℹ Service Worker 需要 HTTPS 或 localhost 才能運作（本機測試時可忽略）');
+}
+
+// 監聽 Service Worker 更新
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    toast('✔ 系統已更新（資料已保留）');
+    setTimeout(() => window.location.reload(), 1500);
+  });
+}
+</script>
+</body>
+</html>
