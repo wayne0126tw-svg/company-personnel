@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#181d10">
+<title>全連人員管理系統 v3 - Supabase 實時同步</title>
+<style>
+:root {
+  --bg: #181d10;
+  --bg2: #1f2615;
+  --olive: #3a4728;
+  --khaki: #a8bf72;
+  --amber: #f0b535;
+  --paper: #e5e0cc;
+  --red: #f07060;
+  --green: #5dde8e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--paper);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--olive);
+}
+
+h1 {
+  font-size: 28px;
+  color: var(--amber);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--olive);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status.connected::before {
+  content: "●";
+  color: var(--green);
+  font-size: 16px;
+}
+
+.status.disconnected::before {
+  content: "●";
+  color: var(--red);
+  font-size: 16px;
+}
+
+.content {
+  background: var(--bg2);
+  padding: 20px;
+  border: 1px solid var(--olive);
+  border-radius: 4px;
+  min-height: 400px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: var(--olive);
+  padding: 15px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 24px;
+  color: var(--amber);
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--khaki);
+  margin-top: 5px;
+}
+
+.platoons {
+  display: grid;
+  gap: 15px;
+}
+
+.platoon {
+  background: var(--bg);
+  border: 1px solid var(--olive);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.platoon-header {
+  background: var(--olive);
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.platoon-header:hover {
+  background: var(--khaki);
+  color: var(--bg);
+}
+
+.platoon-body {
+  padding: 12px;
+  display: none;
+}
+
+.platoon-body.expanded {
+  display: block;
+}
+
+.members {
+  margin-top: 10px;
+}
+
+.member {
+  padding: 10px;
+  background: var(--bg2);
+  margin-bottom: 8px;
+  border-left: 3px solid var(--khaki);
+  border-radius: 2px;
+}
+
+.member-name {
+  font-weight: bold;
+  color: var(--amber);
+}
+
+.member-rank {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+button {
+  padding: 8px 12px;
+  background: var(--olive);
+  color: var(--paper);
+  border: 1px solid var(--khaki);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button:hover {
+  background: var(--khaki);
+  color: var(--bg);
+}
+
+button.primary {
+  background: var(--amber);
+  color: var(--bg);
+}
+
+.muted {
+  color: #606858;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  background: var(--bg);
+  color: var(--paper);
+  border: 1px solid var(--olive);
+  border-radius: 4px;
+  font-family: inherit;
+  margin-bottom: 10px;
+}
+
+.dialog {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog.active {
+  display: flex;
+}
+
+.dialog-content {
+  background: var(--bg2);
+  border: 2px solid var(--olive);
+  border-radius: 4px;
+  padding: 20px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 18px;
+  color: var(--amber);
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.form-row {
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  display: block;
+  font-size: 12px;
+  color: var(--khaki);
+  margin-bottom: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>⚔ 全連人員管理系統</h1>
+    <div class="status disconnected" id="status">
+      <span id="status-text">初始化中...</span>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="stats" id="stats">
+      <div class="stat-box">
+        <div class="stat-number" id="total-count">0</div>
+        <div class="stat-label">總人數</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <button class="primary" onclick="openAddPlatoonDialog()">➕ 新增排</button>
+      <button onclick="exportData()">📤 匯出</button>
+      <button onclick="importData()">📥 匯入</button>
+    </div>
+
+    <div class="platoons" id="platoons">
+      <div style="color: #606858; text-align: center; padding: 40px;">
+        載入中... 請稍候
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Platoon Dialog -->
+<div class="dialog" id="addPlatoonDialog">
+  <div class="dialog-content">
+    <div class="modal-title">新增排</div>
+    <div class="form-row">
+      <label>排名稱</label>
+      <input type="text" id="platoonNameInput" placeholder="例：一排">
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="closeDialog('addPlatoonDialog')">取消</button>
+      <button class="primary" onclick="addPlatoon()">✔ 新增</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Supabase 設定
+const SUPABASE_URL = 'https://ntfdpbriungbqnkpbcqe.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50ZmRwYnJpdW5nYnFua3BiY3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzQ3OTUsImV4cCI6MjA5NDE1MDc5NX0.X45bzMjJaKeF-QcZQgz70T1MixVWkHMpGahOEIqrZyU';
+
+let supabase = null;
+let isConnected = false;
+let db = { platoons: [] };
+
+// 初始化 Supabase
+async function initSupabase() {
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('✔ Supabase 已連線');
+    await loadData();
+    setupRealtimeListener();
+    setConnected(true);
+  } catch(e) {
+    console.error('❌ Supabase 初始化失敗:', e);
+    setConnected(false);
+  }
+}
+
+// 從 Supabase 載入資料
+async function loadData() {
+  try {
+    const { data, error } = await supabase
+      .from('company_data')
+      .select('data')
+      .eq('id', 1)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    
+    if (data && data.data) {
+      db = data.data;
+      console.log('✔ 已載入 Supabase 資料');
+    } else {
+      db = { platoons: [] };
+      await saveData();
+      console.log('ℹ 使用預設資料');
+    }
+    
+    render();
+  } catch(e) {
+    console.error('❌ 載入資料失敗:', e);
+  }
+}
+
+// 儲存資料到 Supabase
+async function saveData() {
+  if (!supabase) return;
+  
+  try {
+    const { error } = await supabase
+      .from('company_data')
+      .upsert({ id: 1, data: db })
+      .eq('id', 1);
+    
+    if (error) throw error;
+    console.log('✔ 資料已儲存');
+  } catch(e) {
+    console.error('❌ 儲存失敗:', e);
+  }
+}
+
+// 設定實時監聽
+function setupRealtimeListener() {
+  if (!supabase) return;
+  
+  supabase
+    .channel('company_changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'company_data' },
+      (payload) => {
+        console.log('🔄 資料已更新');
+        if (payload.new && payload.new.data) {
+          db = payload.new.data;
+          render();
+        }
+      }
+    )
+    .subscribe();
+}
+
+// 更新連線狀態
+function setConnected(connected) {
+  isConnected = connected;
+  const status = document.getElementById('status');
+  const text = document.getElementById('status-text');
+  
+  if (connected) {
+    status.className = 'status connected';
+    text.textContent = '已連線';
+  } else {
+    status.className = 'status disconnected';
+    text.textContent = '離線模式';
+  }
+}
+
+// 新增排
+async function addPlatoon() {
+  const name = document.getElementById('platoonNameInput').value;
+  if (!name.trim()) return;
+  
+  db.platoons.push({
+    id: Date.now(),
+    name: name,
+    squads: []
+  });
+  
+  await saveData();
+  render();
+  closeDialog('addPlatoonDialog');
+  document.getElementById('platoonNameInput').value = '';
+}
+
+// 開啟對話框
+function openAddPlatoonDialog() {
+  document.getElementById('addPlatoonDialog').classList.add('active');
+}
+
+function closeDialog(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// 匯出資料
+function exportData() {
+  const json = JSON.stringify(db, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '全連人員管理_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 匯入資料
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    const text = await file.text();
+    db = JSON.parse(text);
+    await saveData();
+    render();
+  };
+  input.click();
+}
+
+// 渲染頁面
+function render() {
+  const container = document.getElementById('platoons');
+  
+  if (!db.platoons || db.platoons.length === 0) {
+    container.innerHTML = '<div style="color: #606858; text-align: center; padding: 40px;">還沒有排，點「➕ 新增排」開始</div>';
+    document.getElementById('total-count').textContent = '0';
+    return;
+  }
+  
+  let totalCount = 0;
+  let html = '';
+  
+  for (const platoon of db.platoons) {
+    let memberCount = 0;
+    let membersHtml = '';
+    
+    if (platoon.squads && platoon.squads.length > 0) {
+      for (const squad of platoon.squads) {
+        if (squad.members) {
+          for (const member of squad.members) {
+            memberCount++;
+            totalCount++;
+            membersHtml += `
+              <div class="member">
+                <div class="member-name">${member.name || '未命名'}</div>
+                <div class="member-rank">${member.rank || ''} ${member.id || ''}</div>
+              </div>
+            `;
+          }
+        }
+      }
+    }
+    
+    html += `
+      <div class="platoon">
+        <div class="platoon-header" onclick="togglePlatoon(this)">
+          <span>${platoon.name} (${memberCount}人)</span>
+          <span>▼</span>
+        </div>
+        <div class="platoon-body">
+          <button onclick="addSquad(${platoon.id})">➕ 新增班</button>
+          <button onclick="editPlatoon(${platoon.id})">✏️ 編輯</button>
+          <button onclick="deletePlatoon(${platoon.id})">🗑️ 刪除</button>
+          <div class="members">${membersHtml || '<div class="muted">還沒有人員</div>'}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+  document.getElementById('total-count').textContent = totalCount;
+}
+
+function togglePlatoon(el) {
+  el.nextElementSibling.classList.toggle('expanded');
+}
+
+async function addSquad(platoonId) {
+  const squadName = prompt('班名稱:', '');
+  if (!squadName) return;
+  
+  const platoon = db.platoons.find(p => p.id === platoonId);
+  if (!platoon) return;
+  
+  if (!platoon.squads) platoon.squads = [];
+  platoon.squads.push({
+    id: Date.now(),
+    name: squadName,
+    members: []
+  });
+  
+  await saveData();
+  render();
+}
+
+function editPlatoon(id) {
+  const platoon = db.platoons.find(p => p.id === id);
+  if (!platoon) return;
+  
+  const newName = prompt('新排名稱:', platoon.name);
+  if (!newName) return;
+  
+  platoon.name = newName;
+  saveData();
+  render();
+}
+
+function deletePlatoon(id) {
+  if (!confirm('確定刪除這個排嗎？')) return;
+  
+  db.platoons = db.platoons.filter(p => p.id !== id);
+  saveData();
+  render();
+}
+
+// 啟動
+initSupabase();
+</script>
+
+</body>
+</html>
