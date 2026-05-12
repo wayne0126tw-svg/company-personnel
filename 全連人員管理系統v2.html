@@ -957,11 +957,13 @@ main { padding: 20px 24px 40px; }
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+<!-- STATUS INDICATOR -->
+<div id="status-indicator" style="position:fixed;top:10px;right:10px;padding:8px 12px;background:rgba(0,0,0,0.8);color:#fff;border-radius:4px;font-size:12px;z-index:10000;max-width:200px;word-break:break-word;">
+  載入中...
+</div>
 
 <script>
-// Firebase 設定（新版本）
+// Firebase 設定
 const firebaseConfig = {
   apiKey: "AIzaSyAtgZAw5uY8yJjTc6giVgNhS92--BP1_Cg",
   authDomain: "company-personnel-438ff.firebaseapp.com",
@@ -973,26 +975,41 @@ const firebaseConfig = {
   measurementId: "G-R76W8P9ZV4"
 };
 
-// 初始化 Firebase（延遲初始化，等待 SDK 載入）
+// Firebase 初始化
+let firebaseApp = null;
 let database = null;
 let dbRef = null;
 let firebaseEnabled = false;
+let firebaseReady = false;
 
-function initFirebase() {
+function initFirebaseNow() {
   try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebaseApp = firebase.initializeApp(firebaseConfig);
+      console.log('✔ Firebase App 已初始化');
+    } else {
+      firebaseApp = firebase.app();
     }
+    
     database = firebase.database();
     dbRef = database.ref('company');
     firebaseEnabled = true;
-    console.log('✔ Firebase 已連線');
+    firebaseReady = true;
+    console.log('✔ Firebase Database 已連線');
+    console.log('📍 Database URL:', firebaseConfig.databaseURL);
     return true;
   } catch(e) {
-    console.warn('Firebase 初始化失敗:', e.message);
+    console.error('❌ Firebase 初始化失敗:', e.message);
     firebaseEnabled = false;
     return false;
   }
+}
+
+// 立即嘗試初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFirebaseNow);
+} else {
+  initFirebaseNow();
 }
 
 // ══════════════════════════════════════════
@@ -1226,13 +1243,15 @@ function loadDb() {
 }
 
 function saveDb() {
-  // 存到本機 localStorage
+  // 存到本機
   try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){}
   
-  // 如果 Firebase 可用，也同步到 Firebase（背景進行，不阻塞）
-  if (firebaseEnabled && dbRef) {
-    dbRef.set(db).catch(err => {
-      console.warn('Firebase 同步失敗:', err.message);
+  // 同步到 Firebase（立即執行）
+  if (firebaseReady && dbRef) {
+    dbRef.set(db).then(() => {
+      console.log('✔ Firebase 同步成功');
+    }).catch(err => {
+      console.warn('⚠ Firebase 同步失敗:', err.message);
     });
   }
 }
@@ -1732,43 +1751,58 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════
 let firebaseLoaded = false;
 
-// 立即初始化 Firebase（等待 SDK 載入）
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initFirebase();
-  });
-} else {
-  initFirebase();
+function updateStatus(msg, color = '#4CAF50') {
+  const ind = document.getElementById('status-indicator');
+  if (ind) {
+    ind.textContent = msg;
+    ind.style.background = 'rgba(0,0,0,0.8)';
+    ind.style.borderLeft = '3px solid ' + color;
+  }
 }
 
-// 載入資料並設定監聽
+// 強制初始化預設資料
+if (!db || !db.platoons || db.platoons.length === 0) {
+  db = defaultData();
+  console.log('✔ 已初始化預設資料');
+}
+
+// 立即渲染
+render();
+updateStatus('✔ 系統已載入', '#4CAF50');
+firebaseLoaded = true;
+
+// 嘗試從本機或 Firebase 載入備份
 loadDb().then(() => {
-  firebaseLoaded = true;
-  
-  // 確保至少有預設資料
-  if (!db.platoons || db.platoons.length === 0) {
-    db = defaultData();
+  if (db && db.platoons && db.platoons.length > 0) {
+    render();
+    updateStatus('✔ 資料已載入 (' + db.platoons.length + ' 個排)', '#4CAF50');
+    console.log('✔ 資料已載入，共 ' + db.platoons.length + ' 個排');
   }
   
-  render();
-  console.log('✔ 系統已載入，共 ' + db.platoons.length + ' 個排');
-  
-  // 設定 Firebase 監聽（其他人修改時更新）
-  if (firebaseEnabled && dbRef) {
-    console.log('🔗 開始監聽 Firebase 變化...');
+  // 設定 Firebase 實時監聽
+  if (firebaseReady && dbRef) {
+    console.log('🔗 開始監聽 Firebase...');
+    updateStatus('🔗 Firebase 已連線', '#FFC107');
+    
     dbRef.on('value', (snapshot) => {
       const fbData = snapshot.val();
-      if (fbData && fbData.platoons && fbData.platoons.length > 0 && firebaseLoaded) {
+      if (fbData && fbData.platoons && fbData.platoons.length > 0) {
         const oldLen = db.platoons.length;
         db = fbData;
         render();
+        
+        updateStatus('✔ Firebase 同步中 (' + db.platoons.length + ' 個排)', '#4CAF50');
         if (oldLen !== db.platoons.length) {
           console.log('🔄 Firebase 資料已更新');
         }
       }
     }, (err) => {
-      console.warn('Firebase 監聽失敗:', err.message);
+      updateStatus('❌ Firebase 連線失敗', '#F44336');
+      console.error('❌ Firebase 監聽錯誤:', err.message);
     });
+    
+    // 首次將本機資料上傳到 Firebase
+    saveDb();
   }
 });
 
