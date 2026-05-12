@@ -8,9 +8,6 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%233a4728' width='180' height='180'/><text x='50%' y='50%' font-size='80' fill='%23f0b535' text-anchor='middle' dominant-baseline='middle'>⚔</text></svg>">
 <title>全連人員管理系統</title>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap');
 
@@ -803,7 +800,7 @@ main { padding: 20px 24px 40px; }
         </div>
         <div class="form-row">
           <label>入伍日期</label>
-          <input id="dm-enlist" type="date">
+          <input id="dm-enlist" type="text" placeholder="113.01.10">
         </div>
         <div class="form-row">
           <label>連絡電話</label>
@@ -828,15 +825,15 @@ main { padding: 20px 24px 40px; }
         </div>
         <div class="form-row">
           <label>受訓開始日期</label>
-          <input id="dm-train-start" type="date">
+          <input id="dm-train-start" type="text" placeholder="例：114.06.01">
         </div>
         <div class="form-row">
           <label>受訓結束日期</label>
-          <input id="dm-train-end" type="date">
+          <input id="dm-train-end" type="text" placeholder="例：114.06.30">
         </div>
         <div class="form-row">
           <label>出生年月日</label>
-          <input id="dm-birth-date" type="date">
+          <input id="dm-birth-date" type="text" placeholder="例：民國95.12.15（或西元1902.12.15）">
         </div>
       </div>
       <div class="form-row">
@@ -909,7 +906,7 @@ main { padding: 20px 24px 40px; }
         </div>
         <div class="form-row">
           <label>出生年月日</label>
-          <input id="pf-input-birth-date" type="date">
+          <input id="pf-input-birth-date" type="text" placeholder="例：民國95.12.15">
         </div>
         <div class="form-row">
           <label>年　　　齡</label>
@@ -917,11 +914,11 @@ main { padding: 20px 24px 40px; }
         </div>
         <div class="form-row">
           <label>受訓開始日期</label>
-          <input id="pf-input-train-start" type="date">
+          <input id="pf-input-train-start" type="text" placeholder="例：114.06.01">
         </div>
         <div class="form-row">
           <label>受訓結束日期</label>
-          <input id="pf-input-train-end" type="date">
+          <input id="pf-input-train-end" type="text" placeholder="例：114.06.30">
         </div>
       </div>
       <div class="form-row">
@@ -961,29 +958,10 @@ main { padding: 20px 24px 40px; }
 <div class="toast" id="toast"></div>
 
 <script>
-// Firebase 設定
-const firebaseConfig = {
-  apiKey: "AIzaSyAtgZAw5uY8yJjTc6giVgNhS92-",
-  authDomain: "company-personnel-438ff.firebaseapp.com",
-  databaseURL: "https://company-personnel-438ff-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "company-personnel-438ff",
-  storageBucket: "company-personnel-438ff.appspot.com",
-  messagingSenderId: "108168356976",
-  appId: "1:108168356976:web:c44a3834a59ab8",
-  measurementId: "G-R76W8P9ZV4"
-};
-
-// 初始化 Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-// Firebase 資料庫參考
-const dbRef = database.ref('company');
-
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-const STORE_KEY = 'company_mgmt_firebase';
+const STORE_KEY = 'company_mgmt_v4';
 
 function defaultData() {
   return { platoons: [
@@ -1156,50 +1134,12 @@ let confirmCallback = null;
 //  PERSISTENCE
 // ══════════════════════════════════════════
 function loadDb() {
-  // 先嘗試從 Firebase 載入最新資料
-  return new Promise((resolve) => {
-    dbRef.once('value', (snapshot) => {
-      const fbData = snapshot.val();
-      if (fbData && fbData.platoons && fbData.platoons.length > 0) {
-        db = fbData;
-        console.log('✔ 從 Firebase 載入資料');
-      } else {
-        // Firebase 無資料或資料為空，使用預設值
-        db = defaultData();
-        console.log('ℹ 載入預設資料並同步到 Firebase');
-        // 存到 Firebase
-        dbRef.set(db).catch(err => console.warn('首次同步失敗:', err));
-      }
-      resolve();
-    }).catch(err => {
-      console.warn('Firebase 載入失敗，使用本機或預設資料:', err.message);
-      // 無法連線 Firebase，嘗試使用本機資料
-      try { 
-        const d = localStorage.getItem(STORE_KEY); 
-        if (d) { 
-          db = JSON.parse(d);
-          console.log('✔ 從本機載入資料');
-        } else {
-          db = defaultData();
-          console.log('ℹ 使用預設資料（離線模式）');
-        }
-      } catch(e){
-        db = defaultData();
-      }
-      resolve();
-    });
-  });
+  try { const d = localStorage.getItem(STORE_KEY); if (d) return JSON.parse(d); } catch(e){}
+  return defaultData();
 }
 
 function saveDb() {
-  // 同時存到 localStorage（離線備份）和 Firebase
   try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){}
-  
-  // 存到 Firebase
-  dbRef.set(db).catch(err => {
-    console.warn('Firebase 同步失敗:', err.message);
-    toast('⚠ 離線模式（本機已保存）');
-  });
 }
 
 // ══════════════════════════════════════════
@@ -1236,23 +1176,6 @@ function parseROCDate(str) {
   if (!m) return null;
   const year = parseInt(m[1]) + 1911;
   return new Date(year, parseInt(m[2])-1, parseInt(m[3]));
-}
-
-// 西元日期 YYYY-MM-DD 轉民國 ROC.MM.DD
-function convertToROCFormat(isoDate) {
-  if (!isoDate) return '';
-  const [year, month, day] = isoDate.split('-');
-  const rocYear = parseInt(year) - 1911;
-  return `${rocYear}.${month}.${day}`;
-}
-
-// 民國 ROC.MM.DD 轉西元日期 YYYY-MM-DD
-function convertToISOFormat(rocDate) {
-  if (!rocDate) return '';
-  const m = rocDate.replace(/\//g,'.').match(/^(\d+)\.(\d+)\.(\d+)$/);
-  if (!m) return '';
-  const year = parseInt(m[1]) + 1911;
-  return `${year}-${m[2]}-${m[3]}`;
 }
 
 // 計算年齡
@@ -1542,14 +1465,14 @@ function saveMember() {
     name,
     rank: document.getElementById('dm-rank').value,
     id: document.getElementById('dm-id').value.trim()||'—',
-    enlist: convertToROCFormat(document.getElementById('dm-enlist').value) || '—',
+    enlist: document.getElementById('dm-enlist').value.trim()||'—',
     phone: document.getElementById('dm-phone').value.trim()||'—',
     emergency: document.getElementById('dm-emergency').value.trim()||'—',
     status: document.getElementById('dm-status').value,
     notes: document.getElementById('dm-notes').value.trim(),
-    trainStart: convertToROCFormat(document.getElementById('dm-train-start').value),
-    trainEnd: convertToROCFormat(document.getElementById('dm-train-end').value),
-    birthDate: convertToROCFormat(document.getElementById('dm-birth-date').value),
+    trainStart: document.getElementById('dm-train-start').value.trim(),
+    trainEnd: document.getElementById('dm-train-end').value.trim(),
+    birthDate: document.getElementById('dm-birth-date').value.trim(),
   };
   if (editingMemberId) {
     const {squad,member}=findMember(editingMemberId);
@@ -1591,13 +1514,13 @@ function openProfile(mid) {
   document.getElementById('pf-input-name').value        = member.name || '';
   document.getElementById('pf-input-rank').value        = member.rank || '一兵';
   document.getElementById('pf-input-id').value          = (member.id && member.id !== '—') ? member.id : '';
-  document.getElementById('pf-input-enlist').value      = convertToISOFormat((member.enlist && member.enlist !== '—') ? member.enlist : '');
+  document.getElementById('pf-input-enlist').value      = (member.enlist && member.enlist !== '—') ? member.enlist : '';
   document.getElementById('pf-input-phone').value       = (member.phone && member.phone !== '—') ? member.phone : '';
   document.getElementById('pf-input-emergency').value   = (member.emergency && member.emergency !== '—') ? member.emergency : '';
-  document.getElementById('pf-input-birth-date').value  = convertToISOFormat(member.birthDate || '');
+  document.getElementById('pf-input-birth-date').value  = member.birthDate || '';
   document.getElementById('pf-status').value            = member.status || '在部';
-  document.getElementById('pf-input-train-start').value = convertToISOFormat(member.trainStart || '');
-  document.getElementById('pf-input-train-end').value   = convertToISOFormat(member.trainEnd || '');
+  document.getElementById('pf-input-train-start').value = member.trainStart || '';
+  document.getElementById('pf-input-train-end').value   = member.trainEnd || '';
   document.getElementById('pf-notes').value             = member.notes || '';
   
   // 計算年齡
@@ -1619,13 +1542,13 @@ function saveProfile() {
   member.name      = newName;
   member.rank      = document.getElementById('pf-input-rank').value;
   member.id        = document.getElementById('pf-input-id').value.trim() || '—';
-  member.enlist    = convertToROCFormat(document.getElementById('pf-input-enlist').value) || '—';
+  member.enlist    = document.getElementById('pf-input-enlist').value.trim() || '—';
   member.phone     = document.getElementById('pf-input-phone').value.trim() || '—';
   member.emergency = document.getElementById('pf-input-emergency').value.trim() || '—';
-  member.birthDate = convertToROCFormat(document.getElementById('pf-input-birth-date').value);
+  member.birthDate = document.getElementById('pf-input-birth-date').value.trim();
   member.status    = document.getElementById('pf-status').value;
-  member.trainStart = convertToROCFormat(document.getElementById('pf-input-train-start').value);
-  member.trainEnd   = convertToROCFormat(document.getElementById('pf-input-train-end').value);
+  member.trainStart = document.getElementById('pf-input-train-start').value.trim();
+  member.trainEnd   = document.getElementById('pf-input-train-end').value.trim();
   member.notes     = document.getElementById('pf-notes').value.trim();
 
   saveDb();
@@ -1695,35 +1618,7 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
-let firebaseLoaded = false;
-
-// 初始化資料
-db = defaultData();
-
-// 載入資料並初始化即時監聽
-loadDb().then(() => {
-  firebaseLoaded = true;
-  render();
-  
-  // 強制寫入 Firebase（確保資料存在）
-  if (!db.platoons || db.platoons.length === 0) {
-    db = defaultData();
-    saveDb();
-    console.log('✔ 已初始化預設資料到 Firebase');
-  }
-  
-  // 監聽 Firebase 變化（其他人修改時自動更新）
-  dbRef.on('value', (snapshot) => {
-    const fbData = snapshot.val();
-    if (fbData && fbData.platoons && fbData.platoons.length > 0) {
-      db = fbData;
-      render();
-      console.log('🔄 Firebase 資料已更新');
-    }
-  }, (err) => {
-    console.warn('Firebase 監聽失敗:', err.message);
-  });
-});
+render();
 
 // 註冊 Service Worker（PWA 支援，失敗也能正常使用）
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
