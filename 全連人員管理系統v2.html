@@ -1243,13 +1243,13 @@ function loadDb() {
 }
 
 function saveDb() {
-  // 存到本機
+  // 優先存本機
   try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){}
   
-  // 同步到 Firebase（立即執行）
+  // 同時嘗試同步到 Firebase
   if (firebaseReady && dbRef) {
     dbRef.set(db).then(() => {
-      console.log('✔ Firebase 同步成功');
+      console.log('✔ 資料已同步到 Firebase');
     }).catch(err => {
       console.warn('⚠ Firebase 同步失敗:', err.message);
     });
@@ -1749,62 +1749,108 @@ document.addEventListener('keydown',e=>{
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
-let firebaseLoaded = false;
+// Firebase 設定
+const firebaseConfig = {
+  apiKey: "AIzaSyAtgZAw5uY8yJjTc6giVgNhS92--BP1_Cg",
+  authDomain: "company-personnel-438ff.firebaseapp.com",
+  databaseURL: "https://company-personnel-438ff-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "company-personnel-438ff",
+  storageBucket: "company-personnel-438ff.firebasestorage.app",
+  messagingSenderId: "108168356976",
+  appId: "1:108168356976:web:c44a3834a59ab864be40b5",
+  measurementId: "G-R76W8P9ZV4"
+};
 
-function updateStatus(msg, color = '#4CAF50') {
-  const ind = document.getElementById('status-indicator');
-  if (ind) {
-    ind.textContent = msg;
-    ind.style.background = 'rgba(0,0,0,0.8)';
-    ind.style.borderLeft = '3px solid ' + color;
+// Firebase 全局變量
+let firebaseReady = false;
+let firebaseEnabled = false;
+let database = null;
+let dbRef = null;
+
+// 確保 Firebase SDK 已加載，然後初始化
+function tryInitFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      console.warn('⚠ Firebase SDK 未加載');
+      return false;
+    }
+    
+    // 檢查是否已初始化
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebase.initializeApp(firebaseConfig);
+      console.log('✔ Firebase App 初始化成功');
+    } else {
+      console.log('ℹ Firebase App 已存在');
+    }
+    
+    // 取得 Database 參考
+    database = firebase.database();
+    dbRef = database.ref('company');
+    firebaseReady = true;
+    firebaseEnabled = true;
+    
+    console.log('✔ Firebase Realtime Database 已連線');
+    console.log('📍 Database URL:', firebaseConfig.databaseURL);
+    
+    return true;
+  } catch(error) {
+    console.error('❌ Firebase 初始化失敗:', error);
+    firebaseReady = false;
+    firebaseEnabled = false;
+    return false;
   }
 }
 
-// 強制初始化預設資料
-if (!db || !db.platoons || db.platoons.length === 0) {
+// 延遲 1 秒確保 SDK 載入完成
+setTimeout(tryInitFirebase, 1000);
+
+// 加載並監聽資料
+setTimeout(() => {
+  // 初始化本機資料
   db = defaultData();
-  console.log('✔ 已初始化預設資料');
-}
-
-// 立即渲染
-render();
-updateStatus('✔ 系統已載入', '#4CAF50');
-firebaseLoaded = true;
-
-// 嘗試從本機或 Firebase 載入備份
-loadDb().then(() => {
-  if (db && db.platoons && db.platoons.length > 0) {
-    render();
-    updateStatus('✔ 資料已載入 (' + db.platoons.length + ' 個排)', '#4CAF50');
-    console.log('✔ 資料已載入，共 ' + db.platoons.length + ' 個排');
+  try { 
+    const d = localStorage.getItem(STORE_KEY); 
+    if (d) db = JSON.parse(d);
+    console.log('✔ 從本機載入資料');
+  } catch(e) {
+    console.log('ℹ 使用預設資料');
   }
   
-  // 設定 Firebase 實時監聽
+  render();
+  console.log('✔ 系統已載入，共 ' + db.platoons.length + ' 個排');
+  
+  // 嘗試從 Firebase 同步
   if (firebaseReady && dbRef) {
-    console.log('🔗 開始監聽 Firebase...');
-    updateStatus('🔗 Firebase 已連線', '#FFC107');
+    console.log('🔗 正在連線 Firebase...');
     
-    dbRef.on('value', (snapshot) => {
+    dbRef.once('value', (snapshot) => {
       const fbData = snapshot.val();
+      console.log('📨 Firebase 回應:', fbData ? '有資料' : '無資料');
+      
       if (fbData && fbData.platoons && fbData.platoons.length > 0) {
-        const oldLen = db.platoons.length;
+        console.log('✔ 從 Firebase 載入資料');
         db = fbData;
         render();
-        
-        updateStatus('✔ Firebase 同步中 (' + db.platoons.length + ' 個排)', '#4CAF50');
-        if (oldLen !== db.platoons.length) {
+      } else {
+        // Firebase 無資料，上傳本機資料
+        console.log('ℹ Firebase 無資料，上傳本機資料...');
+        saveDb();
+      }
+      
+      // 設定實時監聽
+      dbRef.on('value', (snap) => {
+        const fbData = snap.val();
+        if (fbData && fbData.platoons && fbData.platoons.length > 0) {
+          db = fbData;
+          render();
           console.log('🔄 Firebase 資料已更新');
         }
-      }
-    }, (err) => {
-      updateStatus('❌ Firebase 連線失敗', '#F44336');
-      console.error('❌ Firebase 監聽錯誤:', err.message);
+      });
+    }).catch(err => {
+      console.warn('⚠ Firebase 連線失敗:', err.message);
     });
-    
-    // 首次將本機資料上傳到 Firebase
-    saveDb();
   }
-});
+}, 2500);
 
 // 註冊 Service Worker（PWA 支援，失敗也能正常使用）
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
